@@ -1,0 +1,279 @@
+:root {
+    --primary: #163a63;
+    --primary-dark: #0d2948;
+    --accent: #f0b429;
+    --background: #f4f6f8;
+    --surface: #ffffff;
+    --text: #17202a;
+    --muted: #536170;
+    --border: #cbd3dc;
+    --success: #176b3a;
+    --error: #a61b1b;
+    --focus: #005fcc;
+    --radius: 10px;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+body {
+    margin: 0;
+    font-family: Arial, Helvetica, sans-serif;
+    line-height: 1.6;
+    color: var(--text);
+    background: var(--background);
+}
+
+.container {
+    width: min(1100px, 92%);
+    margin: 0 auto;
+}
+
+.site-header {
+    padding: 2.5rem 0;
+    color: #ffffff;
+    background: var(--primary);
+}
+
+.site-header h1 {
+    margin: 0 0 0.5rem;
+    font-size: clamp(1.8rem, 4vw, 2.7rem);
+}
+
+.site-header p {
+    margin: 0 0 1.5rem;
+}
+
+nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+}
+
+nav a {
+    display: inline-block;
+    padding: 0.6rem 0.85rem;
+    color: #ffffff;
+    font-weight: 700;
+    text-decoration: none;
+    border: 1px solid rgba(255, 255, 255, 0.55);
+    border-radius: 6px;
+}
+
+nav a:hover {
+    background: #ffffff;
+    color: var(--primary-dark);
+}
+
+main {
+    padding: 2rem 0 3rem;
+}
+
+section {
+    margin-bottom: 3rem;
+    scroll-margin-top: 1rem;
+}
+
+.section-heading {
+    margin-bottom: 1.25rem;
+}
+
+.section-heading h2 {
+    margin: 0.2rem 0;
+    color: var(--primary-dark);
+}
+
+.section-heading p {
+    margin-top: 0.25rem;
+}
+
+.eyebrow {
+    margin: 0;
+    color: var(--primary);
+    font-size: 0.85rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.event-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1rem;
+}
+
+.event-card {
+    padding: 1.25rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-top: 5px solid var(--accent);
+    border-radius: var(--radius);
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.06);
+}
+
+.event-card h3 {
+    margin-top: 0;
+    color: var(--primary-dark);
+}
+
+.event-card dl {
+    margin-bottom: 0;
+}
+
+.event-card dt {
+    font-weight: 700;
+}
+
+.event-card dd {
+    margin: 0 0 0.5rem;
+}
+
+.panel {
+    padding: 1.5rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+}
+
+form {
+    max-width: 650px;
+}
+
+.form-group {
+    margin-bottom: 1.15rem;
+}
+
+label {
+    display: block;
+    margin-bottom: 0.35rem;
+    font-weight: 700;
+}
+
+input,
+select,
+button {
+    width: 100%;
+    min-height: 44px;
+    font: inherit;
+    border-radius: 6px;
+}
+
+input,
+select {
+    padding: 0.7rem;
+    color: var(--text);
+    background: #ffffff;
+    border: 1px solid #7c8996;
+}
+
+small {
+    display: block;
+    margin-top: 0.3rem;
+    color: var(--muted);
+}
+
+button {
+    padding: 0.75rem 1rem;
+    color: #ffffff;
+    font-weight: 700;
+    cursor: pointer;
+    background: var(--primary);
+    border: 2px solid var(--primary);
+}
+
+button:hover {
+    background: var(--primary-dark);
+}
+
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+button:focus-visible {
+    outline: 3px solid var(--focus);
+    outline-offset: 3px;
+}
+
+.form-message {
+    min-height: 1.5rem;
+    margin-top: 1rem;
+    font-weight: 700;
+}
+
+.form-message.success {
+    color: var(--success);
+}
+
+.form-message.error {
+    color: var(--error);
+}
+
+.attendee-filter {
+    max-width: 500px;
+}
+
+.attendee-summary {
+    margin: 1rem 0;
+    padding: 0.85rem;
+    background: #e9eef4;
+    border-left: 4px solid var(--primary);
+}
+
+.table-wrapper {
+    overflow-x: auto;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+caption {
+    padding: 0.8rem;
+    font-weight: 700;
+    text-align: left;
+}
+
+th,
+td {
+    padding: 0.8rem;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+}
+
+th {
+    color: #ffffff;
+    background: var(--primary);
+}
+
+tbody tr:last-child td {
+    border-bottom: 0;
+}
+
+.site-footer {
+    padding: 1.5rem 0;
+    color: #ffffff;
+    text-align: center;
+    background: var(--primary-dark);
+}
+
+@media (max-width: 600px) {
+    nav {
+        flex-direction: column;
+    }
+
+    nav a {
+        text-align: center;
+    }
+
+    .panel {
+        padding: 1rem;
+    }
+}
