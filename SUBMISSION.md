@@ -2421,3 +2421,406 @@ Build succeeded
 ```
 
 The final Task 4 implementation is therefore internally consistent with the Task 3 database contract and provides executable evidence for all seven required unit-test scenarios.
+
+
+---
+
+# Task 5 - Group Integration & Verification Report
+
+## Team Roster
+
+| Member | Name | Assigned Role | Primary Responsibility |
+|---|---|---|---|
+| Member 1 | Gio Ilas | Systems Architect & Prompt Lead | System architecture, requirements grounding, AI prompt design, integration consistency, and consolidated documentation |
+| Member 2 | Jelaine San Jose | Frontend Engineer | Semantic HTML5 frontend, CSS styling, vanilla JavaScript interaction, accessibility, and frontend validation |
+| Member 3 | Mark Camino | Database & Backend Engineer | 3NF relational database design, SQL Server schema, ERD, backend registration logic, and database integration |
+| Member 4 | Shantel De Guzman | QA & Security Engineer | Backend security review, parameterized SQL verification, resource-disposal verification, unit testing, and final quality assurance |
+
+The team worked through a shared GitHub repository and used separate development branches where appropriate before integrating completed work into `main`.
+
+## Setup Instructions
+
+### Repository Structure
+
+The project uses the following primary structure:
+
+```text
+SAMG_CampusEventManagementSystem_Midterm2/
+├── README.md
+├── SUBMISSION.md
+├── .gitignore
+├── frontend/
+│   ├── index.html
+│   ├── styles.css
+│   └── script.js
+├── database/
+│   └── schema.sql
+├── backend/
+│   ├── RegistrationService.cs
+│   └── SAMG.CampusEvents.csproj
+└── tests/
+    ├── RegistrationServiceTests.cs
+    ├── SAMG.CampusEvents.Tests.csproj
+    └── MSTestSettings.cs
+```
+
+### Frontend Setup
+
+The frontend uses only HTML5, CSS3, and vanilla JavaScript.
+
+To run the prototype frontend:
+
+1. Clone or open the repository.
+2. Navigate to the `frontend` directory.
+3. Open `index.html` in a web browser or serve the folder using a local development server.
+4. Verify that the Upcoming Events section is displayed.
+5. Complete the Student Registration form using a Full Name, Email, and Event selection.
+6. Submit the form.
+7. Verify that a successful registration appears in the Registered Attendees section.
+8. Attempt to submit the same student for the same event again and verify that the frontend displays the duplicate-registration validation message.
+
+The current frontend intentionally uses mock in-memory JavaScript data. It is not represented as already connected to SQL Server or the C# backend.
+
+### Database Setup
+
+The relational database schema is located at:
+
+```text
+database/schema.sql
+```
+
+The script uses SQL Server-compatible syntax.
+
+To create the database tables:
+
+1. Open a SQL Server-compatible database environment.
+2. Create or select the database to be used for the prototype.
+3. Execute `database/schema.sql`.
+4. Verify that the following tables are created:
+
+```text
+dbo.Users
+dbo.Events
+dbo.Registrations
+```
+
+5. Verify the Primary Keys, Foreign Keys, UNIQUE constraints, CHECK constraints, default constraints, and non-clustered indexes.
+
+The schema establishes:
+
+```text
+Users
+  1
+  |
+  | 0..*
+Registrations
+  *..0
+  |
+  1
+Events
+```
+
+`Registrations` acts as the associative entity between Users and Events.
+
+### Backend Setup
+
+The backend project is located at:
+
+```text
+backend/SAMG.CampusEvents.csproj
+```
+
+The implementation uses C# and `Microsoft.Data.SqlClient`.
+
+From the repository root, restore and build the backend with:
+
+```bash
+dotnet build backend/SAMG.CampusEvents.csproj
+```
+
+The database connection string is supplied externally to the SQL repository implementation. Database credentials are not hard-coded in `RegistrationService.cs`.
+
+### Unit Test Setup
+
+The MSTest project is located at:
+
+```text
+tests/SAMG.CampusEvents.Tests.csproj
+```
+
+From the repository root, execute:
+
+```bash
+dotnet test tests/SAMG.CampusEvents.Tests.csproj
+```
+
+The final integrated test run produced:
+
+```text
+Test summary: total: 7, failed: 0, succeeded: 7, skipped: 0
+Build succeeded
+```
+
+The seven unit tests cover:
+
+1. Blank student name rejection.
+2. Invalid email rejection.
+3. Invalid EventId rejection.
+4. Duplicate registration rejection.
+5. Full event rejection.
+6. Nonexistent event rejection.
+7. Successful valid registration.
+
+The unit tests use a test double implementing `IRegistrationRepository` so that the registration business rules can be tested without depending on a live SQL Server instance.
+
+## AI Disclosure Statement
+
+Generative AI was used as an assisted development and verification tool during the examination project.
+
+AI assistance was used for:
+
+- System architecture drafting.
+- Requirements organization.
+- RCTC-style prompt construction.
+- Frontend prototype generation and refinement.
+- Database schema and Mermaid ERD generation.
+- SQL Server DDL drafting.
+- Backend security analysis.
+- C# registration-service drafting and correction.
+- Unit-test generation and debugging.
+- Cross-component consistency checking.
+- Documentation organization and review.
+
+The team did not treat AI-generated output as automatically correct.
+
+Generated output was manually reviewed against the examination requirements and the established system design. Code was executed where applicable, frontend behavior was manually tested, database definitions were compared against the ERD, Git changes were reviewed, and the unit tests were compiled and executed.
+
+Several AI-assisted outputs required manual correction or refinement before they were accepted into the final repository. These corrections are recorded in the Group Verification Log below.
+
+## Group Verification Log
+
+### Verification 1 - Frontend Registration and Duplicate Validation
+
+**Component:** Task 2 Frontend
+
+**Verification performed:**
+
+The generated frontend was run in the browser and the student registration workflow was manually exercised.
+
+A student registration was submitted using a Full Name, Email, and selected Event.
+
+The team verified that:
+
+- The registration produced a success message.
+- The student appeared in the Registered Attendees table.
+- The selected Event attendee count was updated.
+- Submitting the same student for the same Event again produced a duplicate-registration error rather than adding a second attendee.
+
+**Manual refinement / correction:**
+
+The frontend behavior was checked against the database rule:
+
+```text
+UNIQUE (UserId, EventId)
+```
+
+The JavaScript prototype was kept consistent with this database business rule even though the current frontend still operates using mock in-memory data.
+
+**Verification result:** PASS
+
+---
+
+### Verification 2 - Task 3 ERD and SQL Schema Consistency
+
+**Component:** Task 3 Database Design
+
+**Issue identified:**
+
+During final documentation review, the Task 3 section in `SUBMISSION.md` was found to end prematurely inside the Mermaid ERD section. The actual `database/schema.sql` implementation was complete, but the consolidated documentation did not contain the complete SQL DDL and final consistency sections.
+
+**Manual correction:**
+
+The team:
+
+1. Inspected the actual `database/schema.sql` file.
+2. Closed the incomplete Mermaid Markdown code fence.
+3. Restored the SQL DDL section using the actual implemented schema rather than generating a different replacement.
+4. Added the ERD and SQL Consistency Audit.
+5. Added the Manual Verification Points.
+6. Compared the ERD against the actual SQL implementation.
+
+The final verification confirmed consistency for:
+
+- Users, Events, and Registrations.
+- Primary Keys.
+- Foreign Keys.
+- One-to-many relationships from Users to Registrations and Events to Registrations.
+- Unique User Email.
+- Valid Role constraint.
+- Positive Capacity constraint.
+- Valid Registration Status constraint.
+- `UNIQUE (UserId, EventId)`.
+- Explicit `ON DELETE NO ACTION`.
+- Explicit `ON UPDATE NO ACTION`.
+- Non-clustered indexes on `Registrations.UserId` and `Registrations.EventId`.
+
+**Verification result:** PASS
+
+---
+
+### Verification 3 - Unit Test Compilation Error and Test Correction
+
+**Component:** Task 4 Unit Testing
+
+**Issue identified:**
+
+During execution of the generated unit-test implementation, a compile-time error was encountered involving an assertion in `RegistrationServiceTests`.
+
+The failing build included:
+
+```text
+error CS0411:
+The type arguments for method 'Assert.AreEqual<T>' cannot be inferred from the usage.
+```
+
+There were also nullable-reference warnings during an intermediate test run.
+
+**Manual correction:**
+
+The test implementation was reviewed and corrected so that the assertion matched the actual collection being verified.
+
+Nullable handling in the test double and backend implementation was also corrected.
+
+After the corrections, the complete test suite was executed again.
+
+**Final verification result:**
+
+```text
+Test summary: total: 7, failed: 0, succeeded: 7, skipped: 0
+Build succeeded
+```
+
+**Verification result:** PASS
+
+---
+
+### Verification 4 - Backend SQL Security and Resource Disposal
+
+**Component:** Task 4 Backend Security
+
+**Verification performed:**
+
+The final `backend/RegistrationService.cs` was manually inspected for SQL-injection protection and proper database resource disposal.
+
+The team verified that SQL commands use parameters rather than concatenating user input into SQL statements.
+
+The implementation contains parameterized values including:
+
+```text
+@Email
+@EventId
+@UserId
+@Status
+```
+
+The team also verified that SQL Server resources use `using` declarations, including:
+
+```csharp
+using SqlConnection connection = ...
+using SqlCommand command = ...
+using SqlDataReader reader = ...
+```
+
+This ensures that database connections, commands, and readers are disposed properly.
+
+The connection string is supplied to the SQL repository rather than being embedded as plaintext credentials in the source code.
+
+**Verification result:** PASS
+
+---
+
+### Verification 5 - Integrated Main Branch Test
+
+**Component:** Final Repository Integration
+
+**Verification performed:**
+
+After the frontend and backend development branches were merged into `main`, the backend test suite was executed again from the integrated `main` branch.
+
+The repository status was also checked.
+
+The final Git state showed:
+
+```text
+On branch main
+Your branch is up to date with 'origin/main'.
+
+nothing to commit, working tree clean
+```
+
+The integrated test run produced:
+
+```text
+Test summary: total: 7, failed: 0, succeeded: 7, skipped: 0
+Build succeeded
+```
+
+This confirmed that the tests continued to pass after integration rather than only on the isolated backend development branch.
+
+**Verification result:** PASS
+
+## Final Integration Verification
+
+The final prototype maintains the following system contract across the major components:
+
+```text
+Frontend
+   |
+   | FullName
+   | Email
+   | EventId
+   v
+RegistrationService
+   |
+   | validation
+   | duplicate check
+   | capacity check
+   v
+SQL Repository
+   |
+   v
+SQL Server
+   |
+   +---- Users
+   +---- Events
+   +---- Registrations
+```
+
+The frontend currently demonstrates this workflow using mock data and is not falsely represented as already connected to the backend.
+
+The backend and database use the same core field concepts established by the architecture:
+
+```text
+Users
+- UserId
+- FullName
+- Email
+- Role
+
+Events
+- EventId
+- Title
+- Description
+- EventDate
+- Venue
+- Capacity
+
+Registrations
+- RegistrationId
+- UserId
+- EventId
+- RegistrationDate
+- Status
+```
+
+The final repository therefore contains the required frontend source files, SQL database script, backend/security implementation, executable unit tests, and consolidated submission documentation.
