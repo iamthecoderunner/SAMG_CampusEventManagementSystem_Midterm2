@@ -1685,3 +1685,739 @@ erDiagram
         DATETIME2 RegistrationDate
         VARCHAR Status
     }
+```
+## SQL DDL
+
+The following SQL Server-compatible DDL was implemented in `database/schema.sql`.
+
+```sql
+-- ============================================================
+-- SAMG Campus Event Management System
+-- Task 3 - Database Schema
+-- SQL Server Compatible
+-- ============================================================
+
+-- ============================================================
+-- TABLE: Users
+-- ============================================================
+
+CREATE TABLE dbo.Users
+(
+    UserId INT IDENTITY(1,1) NOT NULL,
+    FullName NVARCHAR(150) NOT NULL,
+    Email NVARCHAR(255) NOT NULL,
+    Role VARCHAR(20) NOT NULL,
+
+    CONSTRAINT PK_Users
+        PRIMARY KEY (UserId),
+
+    CONSTRAINT UQ_Users_Email
+        UNIQUE (Email),
+
+    CONSTRAINT CK_Users_Role
+        CHECK (Role IN ('Student', 'Administrator'))
+);
+GO
+
+
+-- ============================================================
+-- TABLE: Events
+-- ============================================================
+
+CREATE TABLE dbo.Events
+(
+    EventId INT IDENTITY(1,1) NOT NULL,
+    Title NVARCHAR(200) NOT NULL,
+    Description NVARCHAR(1000) NULL,
+    EventDate DATETIME2 NOT NULL,
+    Venue NVARCHAR(200) NOT NULL,
+    Capacity INT NOT NULL,
+
+    CONSTRAINT PK_Events
+        PRIMARY KEY (EventId),
+
+    CONSTRAINT CK_Events_Capacity
+        CHECK (Capacity > 0)
+);
+GO
+
+
+-- ============================================================
+-- TABLE: Registrations
+-- ============================================================
+
+CREATE TABLE dbo.Registrations
+(
+    RegistrationId INT IDENTITY(1,1) NOT NULL,
+    UserId INT NOT NULL,
+    EventId INT NOT NULL,
+    RegistrationDate DATETIME2 NOT NULL
+        CONSTRAINT DF_Registrations_RegistrationDate
+        DEFAULT SYSUTCDATETIME(),
+
+    Status VARCHAR(20) NOT NULL
+        CONSTRAINT DF_Registrations_Status
+        DEFAULT 'Registered',
+
+    CONSTRAINT PK_Registrations
+        PRIMARY KEY (RegistrationId),
+
+    CONSTRAINT FK_Registrations_Users
+        FOREIGN KEY (UserId)
+        REFERENCES dbo.Users(UserId)
+        ON DELETE NO ACTION
+        ON UPDATE NO ACTION,
+
+    CONSTRAINT FK_Registrations_Events
+        FOREIGN KEY (EventId)
+        REFERENCES dbo.Events(EventId)
+        ON DELETE NO ACTION
+        ON UPDATE NO ACTION,
+
+    CONSTRAINT CK_Registrations_Status
+        CHECK (Status IN ('Registered', 'Cancelled')),
+
+    CONSTRAINT UQ_Registrations_User_Event
+        UNIQUE (UserId, EventId)
+);
+GO
+
+
+-- ============================================================
+-- NON-CLUSTERED INDEXES ON FOREIGN KEY COLUMNS
+-- Required explicitly for Task 3 examination compliance
+-- ============================================================
+
+CREATE NONCLUSTERED INDEX IX_Registrations_UserId
+    ON dbo.Registrations(UserId);
+GO
+
+CREATE NONCLUSTERED INDEX IX_Registrations_EventId
+    ON dbo.Registrations(EventId);
+GO
+```
+
+## ERD and SQL Consistency Audit
+
+The Mermaid ERD and implemented SQL schema were manually compared for consistency.
+
+- `USERS` in the ERD corresponds to `dbo.Users`.
+- `EVENTS` in the ERD corresponds to `dbo.Events`.
+- `REGISTRATIONS` in the ERD corresponds to `dbo.Registrations`.
+- `Users.UserId` is the primary key referenced by `Registrations.UserId`.
+- `Events.EventId` is the primary key referenced by `Registrations.EventId`.
+- The ERD represents one User having zero or many Registrations.
+- The ERD represents one Event receiving zero or many Registrations.
+- The SQL therefore implements the many-to-many relationship between Users and Events through Registrations.
+- The SQL attributes correspond to the attributes represented in the ERD.
+- `UNIQUE (UserId, EventId)` enforces the rule that a user cannot register for the same event more than once.
+- `CHECK (Role IN ('Student', 'Administrator'))` enforces the valid user roles.
+- `CHECK (Capacity > 0)` enforces positive event capacity.
+- `CHECK (Status IN ('Registered', 'Cancelled'))` enforces the valid registration states.
+- Both Foreign Keys explicitly use `ON DELETE NO ACTION` and `ON UPDATE NO ACTION`.
+- Non-clustered indexes are provided on both Foreign Key columns.
+
+No inconsistency was identified between the implemented SQL schema and the Mermaid ERD.
+
+## Manual Verification Points
+
+Before submission, the Task 3 database design was manually checked for the following:
+
+- [x] Three required entities are present: Users, Events, and Registrations.
+- [x] Each table has a Primary Key.
+- [x] `Registrations.UserId` references `Users.UserId`.
+- [x] `Registrations.EventId` references `Events.EventId`.
+- [x] Foreign Key referential actions are explicitly defined.
+- [x] User Email is unique.
+- [x] User Role is restricted to Student or Administrator.
+- [x] Event Capacity must be greater than zero.
+- [x] Registration Status is restricted to Registered or Cancelled.
+- [x] Duplicate User/Event registrations are prevented.
+- [x] RegistrationDate has a database default.
+- [x] Foreign Key columns have non-clustered indexes.
+- [x] The schema remains limited to the required prototype scope.
+- [x] The Mermaid ERD was rendered and manually verified.
+- [x] The SQL implementation is stored in `database/schema.sql`.
+
+
+---
+
+---
+
+# Task 4 - Backend Security and Unit Testing
+
+## AI Prompt Used
+
+The following prompt was used for Task 4:
+
+```text
+ROLE
+
+Act as the Backend Security Engineer and Unit Testing Engineer responsible for Task 4 of a 4th Year BSIT midterm laboratory examination.
+
+CONTEXT
+
+The project is the SAMG Online Campus Event Management System.
+
+The integrated system currently has:
+
+Frontend:
+- Students can view upcoming events.
+- Students can submit Full Name, Email, and Event selection.
+- Administrators can view registered attendees.
+- The current frontend uses mock in-memory data.
+
+Database:
+Users
+- UserId
+- FullName
+- Email
+- Role
+
+Events
+- EventId
+- Title
+- Description
+- EventDate
+- Venue
+- Capacity
+
+Registrations
+- RegistrationId
+- UserId
+- EventId
+- RegistrationDate
+- Status
+
+Database rules already established:
+- Email is unique.
+- Role is Student or Administrator.
+- Capacity must be greater than zero.
+- Status is Registered or Cancelled.
+- UNIQUE (UserId, EventId) prevents duplicate registration.
+- Registrations.UserId references Users.UserId.
+- Registrations.EventId references Events.EventId.
+
+The database is SQL Server-compatible.
+
+TASK
+
+Design a secure but simple backend prototype for event registration and provide unit tests appropriate for a 3-hour BSIT midterm laboratory examination.
+
+Use C#.
+
+The implementation must remain consistent with the existing frontend and Task 3 database schema.
+
+BACKEND REQUIREMENTS
+
+Create a RegistrationService that:
+
+1. Accepts student registration input:
+   - FullName
+   - Email
+   - EventId
+
+2. Performs input validation before database operations.
+
+3. Rejects:
+   - blank FullName
+   - invalid or blank Email
+   - invalid EventId
+   - duplicate registration
+   - registration when event capacity has already been reached
+   - registration for an event that does not exist
+
+4. Uses parameterized SQL commands.
+
+5. Does not construct SQL using user-input string concatenation or interpolation.
+
+6. Uses SQL Server-compatible database access.
+
+7. Checks whether a user already exists by Email.
+
+8. Creates a Student user if the Email does not yet exist.
+
+9. Checks the selected Event and its Capacity.
+
+10. Counts active registrations using Status = 'Registered'.
+
+11. Inserts the registration using:
+   - UserId
+   - EventId
+   - Status = 'Registered'
+   - database/default RegistrationDate where appropriate
+
+12. Returns a simple result that indicates whether registration succeeded and provides a useful message.
+
+SECURITY REQUIREMENTS
+
+Demonstrate:
+- parameterized queries
+- input validation
+- safe handling of database values
+- no plaintext credentials in source code
+- connection string supplied to the service rather than hard-coded
+- minimal exception exposure to the caller
+
+UNIT TEST REQUIREMENTS
+
+Provide practical unit tests covering at least:
+
+1. Blank student name is rejected.
+2. Invalid email is rejected.
+3. Invalid EventId is rejected.
+4. Duplicate registration is rejected.
+5. Full event is rejected.
+6. Nonexistent event is rejected.
+7. Valid registration succeeds.
+
+Keep the testing approach realistic for the prototype.
+
+Do not introduce:
+- authentication frameworks
+- dependency-injection frameworks
+- ORMs such as Entity Framework
+- cloud services
+- microservices
+- payment systems
+- notification systems
+- unrelated enterprise architecture
+
+IMPORTANT INTEGRATION RULES
+
+- Use the exact database table and field names from Task 3.
+- Do not modify the established database schema.
+- Do not claim the frontend is already connected to this backend.
+- Explain how this service would later replace the frontend's current mock registration behavior.
+- Keep the implementation understandable to a 4th Year BSIT student.
+
+OUTPUT REQUIREMENTS
+
+Return the output under exactly these headings:
+
+## Security Analysis
+
+## RegistrationService.cs
+
+Provide the complete C# source code.
+
+## Unit Tests
+
+Provide complete C# unit-test source code.
+
+## Test Cases
+
+Provide a concise table containing:
+- Test Case
+- Input/Condition
+- Expected Result
+
+## Frontend and Database Integration
+
+Explain how:
+Frontend Form
+→ RegistrationService
+→ SQL Server
+
+would operate when integrated.
+
+## Manual Verification Checklist
+
+Identify what a student should manually inspect or test before submission.
+```
+
+## AI-Generated Response
+
+The initial AI-generated Task 4 solution was reviewed against the examination requirements. During manual grounding and execution, it was identified that the initial test design did not provide executable isolated tests for all seven required cases.
+
+The implementation was therefore corrected before final submission. A small repository abstraction was introduced so that the registration business rules could be tested without requiring a live SQL Server instance. The final implementation remains within the required prototype scope and does not use an ORM, dependency-injection framework, authentication framework, microservice architecture, or other unnecessary enterprise technology.
+
+The final source implementation is stored in:
+
+```text
+backend/RegistrationService.cs
+backend/SAMG.CampusEvents.csproj
+tests/RegistrationServiceTests.cs
+tests/SAMG.CampusEvents.Tests.csproj
+```
+
+## Security Analysis
+
+The final backend separates registration business logic from SQL Server data access through a small `IRegistrationRepository` interface.
+
+This allows `RegistrationService` to be unit-tested using a simple fake repository while the real `SqlRegistrationRepository` continues to demonstrate SQL Server-compatible data access.
+
+The following security and validation controls are implemented:
+
+1. `FullName` is validated before database access.
+2. Blank or whitespace-only names are rejected.
+3. Email is validated before database access.
+4. Blank or invalid email addresses are rejected.
+5. `EventId` must be greater than zero.
+6. The selected Event must exist.
+7. Duplicate registration is checked before insertion.
+8. Event capacity is checked before registration.
+9. Active registration counts use `Status = 'Registered'`.
+10. Existing Users are identified through `Email`.
+11. A new User is created with `Role = 'Student'` when the Email does not already exist.
+12. Registration insertion uses `UserId`, `EventId`, and `Status = 'Registered'`.
+13. `RegistrationDate` is not supplied by the application because the Task 3 database schema provides the default using `SYSUTCDATETIME()`.
+14. SQL commands use parameters.
+15. User input is not concatenated or interpolated into SQL commands.
+16. The database connection string is supplied externally to `SqlRegistrationRepository`.
+17. No plaintext database credentials are stored in `RegistrationService.cs`.
+18. Database implementation details and stack traces are not returned to the caller.
+19. Task 3 database constraints remain the final integrity safeguards, including Foreign Keys, CHECK constraints, and `UNIQUE (UserId, EventId)`.
+
+The design therefore demonstrates application-level validation together with database-level integrity enforcement.
+
+## RegistrationService.cs
+
+The complete implementation is stored in:
+
+```text
+backend/RegistrationService.cs
+```
+
+The implementation contains the following primary components:
+
+### RegistrationResult
+
+Represents the result returned by a registration attempt.
+
+Properties:
+
+- `Success`
+- `Message`
+
+This provides a simple response appropriate for the prototype without exposing database internals.
+
+### EventInfo
+
+Represents the Event information needed by the registration business logic:
+
+- `EventId`
+- `Capacity`
+
+### IRegistrationRepository
+
+Defines the limited data operations required by the registration service:
+
+```csharp
+EventInfo? GetEvent(int eventId);
+int? GetUserIdByEmail(string email);
+int CreateStudent(string fullName, string email);
+bool RegistrationExists(int userId, int eventId);
+int GetRegisteredCount(int eventId);
+void InsertRegistration(int userId, int eventId);
+```
+
+The interface was intentionally kept small and focused on Task 4 requirements.
+
+### RegistrationService
+
+`RegistrationService.RegisterStudent()` accepts:
+
+```text
+FullName
+Email
+EventId
+```
+
+The service performs the following sequence:
+
+```text
+Receive registration input
+        |
+        v
+Validate FullName
+        |
+        v
+Validate Email
+        |
+        v
+Validate EventId
+        |
+        v
+Check whether Event exists
+        |
+        v
+Find existing User by Email
+        |
+        v
+Check duplicate registration
+        |
+        v
+Count active Registered attendees
+        |
+        v
+Compare count against Event Capacity
+        |
+        v
+Create Student User when necessary
+        |
+        v
+Perform final duplicate check
+        |
+        v
+Insert Registration
+        |
+        v
+Return RegistrationResult
+```
+
+A successful operation returns:
+
+```text
+Registration successful.
+```
+
+Invalid operations return a user-friendly failure message without exposing SQL Server exception details.
+
+### SqlRegistrationRepository
+
+`SqlRegistrationRepository` provides the real SQL Server-compatible data-access implementation.
+
+It operates against the exact Task 3 tables:
+
+```text
+dbo.Users
+dbo.Events
+dbo.Registrations
+```
+
+The implementation uses `Microsoft.Data.SqlClient`.
+
+All runtime values are passed using SQL parameters such as:
+
+```csharp
+command.Parameters.Add(
+    "@EventId",
+    SqlDbType.Int).Value = eventId;
+```
+
+and:
+
+```csharp
+command.Parameters.Add(
+    "@Email",
+    SqlDbType.NVarChar,
+    255).Value = email;
+```
+
+No SQL statement is constructed by concatenating student input.
+
+The connection string is received through the repository constructor rather than being hard-coded:
+
+```csharp
+public SqlRegistrationRepository(
+    string connectionString)
+```
+
+This avoids storing database credentials directly in the source file.
+
+The registration INSERT corresponds directly to the Task 3 schema:
+
+```sql
+INSERT INTO dbo.Registrations
+    (UserId, EventId, Status)
+VALUES
+    (@UserId, @EventId, @Status);
+```
+
+`RegistrationDate` is intentionally omitted because `database/schema.sql` defines:
+
+```sql
+DEFAULT SYSUTCDATETIME()
+```
+
+for that field.
+
+## Unit Tests
+
+The complete executable unit-test implementation is stored in:
+
+```text
+tests/RegistrationServiceTests.cs
+```
+
+The test project is stored in:
+
+```text
+tests/SAMG.CampusEvents.Tests.csproj
+```
+
+MSTest is used for the unit tests.
+
+A small `FakeRegistrationRepository` implements `IRegistrationRepository` for testing. This allows the registration business rules to be executed without requiring a live SQL Server database.
+
+This is limited to testing support and does not replace the real `SqlRegistrationRepository`.
+
+The final test suite contains seven executable test methods:
+
+```text
+BlankStudentName_IsRejected
+InvalidEmail_IsRejected
+InvalidEventId_IsRejected
+DuplicateRegistration_IsRejected
+FullEvent_IsRejected
+NonexistentEvent_IsRejected
+ValidRegistration_Succeeds
+```
+
+The valid-registration test also verifies that one registration was actually added to the fake repository.
+
+## Test Cases
+
+| Test Case | Input / Condition | Expected Result |
+|---|---|---|
+| Blank student name | `FullName = ""` | Registration rejected with `Full name is required.` |
+| Invalid email | Email is `not-an-email` | Registration rejected with valid-email message |
+| Invalid EventId | `EventId = 0` | Registration rejected with valid-EventId message |
+| Duplicate registration | Same User is already registered for selected Event | Registration rejected as duplicate |
+| Full event | Active Registered count equals Event Capacity | Registration rejected because Event is full |
+| Nonexistent event | Positive EventId does not exist | Registration rejected because Event does not exist |
+| Valid registration | Valid Student data, Event exists, capacity available, no duplicate | Registration succeeds and registration record is added |
+
+## Test Execution Result
+
+The completed unit-test project was executed in GitHub Codespaces using:
+
+```bash
+dotnet test tests/SAMG.CampusEvents.Tests.csproj
+```
+
+Final verified result:
+
+```text
+SAMG.CampusEvents net10.0 succeeded
+SAMG.CampusEvents.Tests net10.0 succeeded
+SAMG.CampusEvents.Tests test net10.0 succeeded
+
+Test summary: total: 7, failed: 0, succeeded: 7, skipped: 0
+Build succeeded
+```
+
+All seven required Task 4 test cases therefore executed successfully.
+
+No test was skipped.
+
+The final verified run contained no compilation errors and no test failures.
+
+## Frontend and Database Integration
+
+The intended integration path is:
+
+```text
+Frontend Registration Form
+        |
+        | FullName
+        | Email
+        | EventId
+        v
+Backend Endpoint
+        |
+        v
+RegistrationService
+        |
+        v
+IRegistrationRepository
+        |
+        v
+SqlRegistrationRepository
+        |
+        v
+SQL Server
+        |
+        +---- dbo.Users
+        |
+        +---- dbo.Events
+        |
+        +---- dbo.Registrations
+```
+
+The current Task 2 frontend is still a prototype using mock in-memory JavaScript data.
+
+It is not represented as already connected to `RegistrationService` or SQL Server.
+
+When the components are integrated in a later implementation, the frontend registration form would send:
+
+```text
+FullName
+Email
+EventId
+```
+
+to a backend endpoint.
+
+The backend endpoint would call:
+
+```text
+RegistrationService.RegisterStudent()
+```
+
+The service would perform validation and registration business rules and then use `SqlRegistrationRepository` for SQL Server operations.
+
+The field mapping is:
+
+| Frontend / Backend Value | Database Mapping |
+|---|---|
+| Full Name | `Users.FullName` |
+| Email | `Users.Email` |
+| Student role | `Users.Role = 'Student'` |
+| Selected Event | `Events.EventId` |
+| Resolved User | `Registrations.UserId` |
+| Selected Event | `Registrations.EventId` |
+| Registration state | `Registrations.Status = 'Registered'` |
+| Registration time | `Registrations.RegistrationDate` database default |
+
+This maintains consistency between Tasks 2, 3, and 4 without falsely claiming that the prototype frontend is already connected to SQL Server.
+
+## Manual Verification Checklist
+
+Before final submission, Task 4 was manually checked for the following:
+
+- [x] Backend implementation uses C#.
+- [x] SQL Server-compatible access uses `Microsoft.Data.SqlClient`.
+- [x] `FullName`, `Email`, and `EventId` are accepted as registration input.
+- [x] Blank FullName is rejected.
+- [x] Invalid or blank Email is rejected.
+- [x] Invalid EventId is rejected.
+- [x] Nonexistent Event is rejected.
+- [x] Duplicate registration is rejected.
+- [x] Registration is rejected when Event capacity is reached.
+- [x] Existing User is checked by Email.
+- [x] New User is created with `Role = 'Student'`.
+- [x] Active registrations are counted using `Status = 'Registered'`.
+- [x] New registrations use `Status = 'Registered'`.
+- [x] `RegistrationDate` uses the Task 3 database default.
+- [x] SQL commands use parameters.
+- [x] User input is not concatenated into SQL statements.
+- [x] Database connection string is supplied externally.
+- [x] No plaintext database credentials are stored in source code.
+- [x] Database exception details are not exposed to the caller.
+- [x] Task 3 table and column names are preserved.
+- [x] The Task 3 database schema was not redesigned.
+- [x] No ORM was introduced.
+- [x] No authentication framework was introduced.
+- [x] No dependency-injection framework was introduced.
+- [x] No cloud service or microservice architecture was introduced.
+- [x] Seven required unit tests are implemented.
+- [x] All seven tests were actually executed.
+- [x] Final result: 7 succeeded, 0 failed, 0 skipped.
+- [x] Backend project builds successfully.
+- [x] Frontend is correctly documented as currently using mock data rather than being connected to the backend.
+- [x] Implementation remains appropriate for a 3-hour BSIT prototype.
+
+## Task 4 Final Verification
+
+Task 4 was verified through actual compilation and unit-test execution in GitHub Codespaces.
+
+Final test evidence:
+
+```text
+Test summary: total: 7, failed: 0, succeeded: 7, skipped: 0
+Build succeeded
+```
+
+The final Task 4 implementation is therefore internally consistent with the Task 3 database contract and provides executable evidence for all seven required unit-test scenarios.
