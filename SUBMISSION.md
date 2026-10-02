@@ -460,3 +460,280 @@ This architecture is realistic for a three-hour prototype because it limits the 
 ### Manual Grounding Evaluation
 
 The AI-generated architecture is realistic for a 3-hour team prototype because it limits the system to the required core functions: viewing events, registering students, and viewing registered attendees. The proposed three-layer structure is simple enough to divide across the team while still allowing the frontend, backend, and database tasks to integrate consistently. The use of three core entities—Users, Events, and Registrations—keeps the database scope manageable while supporting the required workflows. Some additional validation rules and data fields were treated as design choices rather than mandatory requirements, so they will be verified during implementation before being finalized.
+
+
+
+
+
+# Task 3 - Database Design & ERD Generation
+
+## AI Prompt Used
+
+ROLE
+
+Act as a Database Engineer responsible for Task 3 of a 4th Year BSIT midterm laboratory examination.
+
+CONTEXT
+
+The project is an Online Campus Event Management System.
+
+The agreed system baseline is:
+
+Actors:
+- Student
+- Administrator
+
+Core system functions:
+- Students can view upcoming campus events.
+- Students can register for an event.
+- Administrators can view registered attendees.
+
+The agreed architecture uses:
+- Frontend
+- Backend
+- Relational Database
+
+The agreed core entities are:
+- Users
+- Events
+- Registrations
+
+The database design must remain consistent with the frontend, backend, unit tests, and SUBMISSION.md documentation.
+
+TASK
+
+Design a Third Normal Form (3NF) relational database schema for the Online Campus Event Management System.
+
+Use at least the following relational entities:
+
+1. Users
+2. Events
+3. Registrations
+
+For each entity, define:
+- Primary Key
+- attributes
+- data types
+- nullability
+- uniqueness rules where appropriate
+- Foreign Keys where applicable
+- purpose of each important attribute
+
+Then:
+
+1. Explain why the design satisfies 1NF, 2NF, and 3NF.
+2. Define the cardinality between Users, Events, and Registrations.
+3. Identify business rules enforced by the schema.
+4. Generate a Mermaid.js Entity-Relationship Diagram.
+5. Generate a production-grade SQL DDL script.
+6. Audit the Mermaid ERD and SQL script against each other.
+
+SQL REQUIREMENTS
+
+The SQL DDL must explicitly include:
+
+- CREATE TABLE statements
+- Primary Key constraints
+- Foreign Key constraints
+- explicit referential actions/rules
+- CHECK constraints
+- UNIQUE constraints where appropriate
+- NOT NULL constraints where appropriate
+- non-clustered indexes on Foreign Key columns
+
+Use SQL Server-compatible syntax because the provided backend security example uses C# SqlConnection and SqlCommand.
+
+DATABASE DESIGN RULES
+
+Use these initial design choices unless they create a normalization or integrity problem:
+
+Users:
+- UserId
+- FullName
+- Email
+- Role
+
+Events:
+- EventId
+- Title
+- Description
+- EventDate
+- Venue
+- Capacity
+
+Registrations:
+- RegistrationId
+- UserId
+- EventId
+- RegistrationDate
+- Status
+
+Apply appropriate integrity rules, including:
+
+- User email must be unique.
+- User Role must be limited to valid system roles.
+- Event Capacity must be greater than zero.
+- Registration Status must be limited to valid values.
+- A User must not be able to register for the same Event more than once.
+- Registrations must reference valid Users and Events.
+
+Keep the schema appropriate for a 3-hour student prototype.
+
+Do not introduce unnecessary entities, authentication tables, payment tables, notification tables, or enterprise-level database features.
+
+Do not redesign the project beyond the required event-management scope.
+
+OUTPUT FORMAT
+
+Use exactly these headings:
+
+## Proposed 3NF Schema
+## Entity Details
+## Relationship Cardinalities
+## Normalization Analysis
+## Business Rules
+## Mermaid.js ERD
+## SQL DDL
+## ERD and SQL Consistency Audit
+## Manual Verification Points
+
+---
+
+## Proposed 3NF Schema
+
+The database uses three core relational entities:
+
+1. Users
+2. Events
+3. Registrations
+
+`Registrations` acts as the associative entity between `Users` and `Events`, resolving the many-to-many relationship into two one-to-many relationships.
+
+### Users
+
+| Attribute | Data Type | Rule |
+|---|---|---|
+| UserId | INT IDENTITY(1,1) | Primary Key |
+| FullName | NVARCHAR(150) | NOT NULL |
+| Email | NVARCHAR(255) | NOT NULL, UNIQUE |
+| Role | VARCHAR(20) | NOT NULL, CHECK |
+
+Valid roles:
+
+- Student
+- Administrator
+
+### Events
+
+| Attribute | Data Type | Rule |
+|---|---|---|
+| EventId | INT IDENTITY(1,1) | Primary Key |
+| Title | NVARCHAR(200) | NOT NULL |
+| Description | NVARCHAR(1000) | NULL |
+| EventDate | DATETIME2 | NOT NULL |
+| Venue | NVARCHAR(200) | NOT NULL |
+| Capacity | INT | NOT NULL, CHECK > 0 |
+
+### Registrations
+
+| Attribute | Data Type | Rule |
+|---|---|---|
+| RegistrationId | INT IDENTITY(1,1) | Primary Key |
+| UserId | INT | NOT NULL, Foreign Key |
+| EventId | INT | NOT NULL, Foreign Key |
+| RegistrationDate | DATETIME2 | NOT NULL, DEFAULT |
+| Status | VARCHAR(20) | NOT NULL, CHECK |
+
+Valid registration statuses:
+
+- Registered
+- Cancelled
+
+The combination `(UserId, EventId)` is unique to prevent duplicate registration for the same event.
+
+---
+
+## Relationship Cardinalities
+
+The schema uses these relationships:
+
+- One User may have zero or many Registrations.
+- Each Registration belongs to exactly one User.
+- One Event may have zero or many Registrations.
+- Each Registration belongs to exactly one Event.
+- Users and Events therefore have a many-to-many relationship resolved through Registrations.
+
+---
+
+## Normalization Analysis
+
+### First Normal Form - 1NF
+
+The schema satisfies 1NF because all attributes contain atomic values, each table has a primary key, and there are no repeating groups.
+
+### Second Normal Form - 2NF
+
+The schema satisfies 2NF because each table uses a single-column primary key and all non-key attributes depend on the complete primary key. The `(UserId, EventId)` combination in Registrations is a unique business constraint rather than the primary key.
+
+### Third Normal Form - 3NF
+
+The schema satisfies 3NF because there are no inappropriate transitive dependencies.
+
+User information is stored only in `Users`, event information is stored only in `Events`, and registration-specific information is stored only in `Registrations`.
+
+This prevents unnecessary duplication and update anomalies.
+
+---
+
+## Business Rules
+
+The schema enforces the following rules:
+
+1. Each user has a unique UserId.
+2. Each user email must be unique.
+3. User Role must be either Student or Administrator.
+4. Each event has a unique EventId.
+5. Event Capacity must be greater than zero.
+6. Each registration must reference an existing User.
+7. Each registration must reference an existing Event.
+8. Registration Status must be either Registered or Cancelled.
+9. A User cannot have more than one registration for the same Event.
+10. Foreign Keys use explicit NO ACTION rules for delete and update operations.
+
+Seat availability is not enforced by a simple CHECK constraint because it depends on the number of related registration rows. This rule will be handled through backend validation.
+
+---
+
+## Mermaid.js ERD
+
+The following Mermaid.js ERD was manually rendered and verified successfully:
+
+```mermaid
+erDiagram
+
+    USERS ||--o{ REGISTRATIONS : "has"
+    EVENTS ||--o{ REGISTRATIONS : "receives"
+
+    USERS {
+        INT UserId PK
+        NVARCHAR FullName
+        NVARCHAR Email UK
+        VARCHAR Role
+    }
+
+    EVENTS {
+        INT EventId PK
+        NVARCHAR Title
+        NVARCHAR Description
+        DATETIME2 EventDate
+        NVARCHAR Venue
+        INT Capacity
+    }
+
+    REGISTRATIONS {
+        INT RegistrationId PK
+        INT UserId FK
+        INT EventId FK
+        DATETIME2 RegistrationDate
+        VARCHAR Status
+    }
